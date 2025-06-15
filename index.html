@@ -4,8 +4,8 @@
 <head>
   <meta charset="utf-8">
   <title>Robot Code Simulator</title>
-  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
-  <script src="https://unpkg.com/blockly/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/blockly.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/python.min.js"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -47,59 +47,92 @@
   </xml>
 
   <script>
-    const workspace = Blockly.inject('blocklyDiv', {
-      toolbox: document.getElementById('toolbox')
+    window.addEventListener('load', function () {
+      Blockly.defineBlocksWithJsonArray([
+        {
+          "type": "move_forward",
+          "message0": "move forward %1 steps",
+          "args0": [{ "type": "field_number", "name": "STEPS", "value": 10 }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Move the robot forward by steps"
+        },
+        {
+          "type": "turn_left",
+          "message0": "turn left %1 degrees",
+          "args0": [{ "type": "field_number", "name": "DEGREES", "value": 90 }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Turn the robot left"
+        },
+        {
+          "type": "turn_right",
+          "message0": "turn right %1 degrees",
+          "args0": [{ "type": "field_number", "name": "DEGREES", "value": 90 }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Turn the robot right"
+        }
+      ]);
+
+      window.PythonGenerator = {
+        workspaceToCode: function (workspace) {
+          let code = '';
+          const topBlocks = workspace.getTopBlocks(true);
+
+          for (let block of topBlocks) {
+            code += this.blockToCode(block);
+          }
+          return code;
+        },
+
+        blockToCode: function (block) {
+          if (!block) return '';
+
+          let code = '';
+          const type = block.type;
+
+          if (type === 'move_forward') {
+            const steps = block.getFieldValue('STEPS');
+            code = `robot.move_forward(${steps})\n`;
+          } else if (type === 'turn_left') {
+            const degrees = block.getFieldValue('DEGREES');
+            code = `robot.turn_left(${degrees})\n`;
+          } else if (type === 'turn_right') {
+            const degrees = block.getFieldValue('DEGREES');
+            code = `robot.turn_right(${degrees})\n`;
+          }
+
+          // Handle next block
+          const nextBlock = block.getNextBlock();
+          if (nextBlock) {
+            code += this.blockToCode(nextBlock);
+          }
+
+          return code;
+        }
+      };
+
+      // Initialize workspace AFTER defining blocks
+      window.workspace = Blockly.inject('blocklyDiv', {
+        toolbox: document.getElementById('toolbox')
+      });
     });
 
-    Blockly.defineBlocksWithJsonArray([
-      {
-        "type": "move_forward",
-        "message0": "move forward %1 steps",
-        "args0": [{ "type": "field_number", "name": "STEPS", "value": 10 }],
-        "previousStatement": null,
-        "nextStatement": null,
-        "colour": 160
-      },
-      {
-        "type": "turn_left",
-        "message0": "turn left %1 degrees",
-        "args0": [{ "type": "field_number", "name": "DEGREES", "value": 90 }],
-        "previousStatement": null,
-        "nextStatement": null,
-        "colour": 210
-      },
-      {
-        "type": "turn_right",
-        "message0": "turn right %1 degrees",
-        "args0": [{ "type": "field_number", "name": "DEGREES", "value": 90 }],
-        "previousStatement": null,
-        "nextStatement": null,
-        "colour": 210
-      }
-    ]);
-
-    Blockly.Python['move_forward'] = function (block) {
-      const steps = block.getFieldValue('STEPS');
-      return `robot.move_forward(${steps})\n`;
-    };
-
-    Blockly.Python['turn_left'] = function (block) {
-      const degrees = block.getFieldValue('DEGREES');
-      return `robot.turn_left(${degrees})\n`;
-    };
-
-    Blockly.Python['turn_right'] = function (block) {
-      const degrees = block.getFieldValue('DEGREES');
-      return `robot.turn_right(${degrees})\n`;
-    };
-
     function generateCode() {
-      const code = Blockly.Python.workspaceToCode(workspace);
-      console.log("Generated Code:", code);
+      if (!window.workspace) {
+        console.error('Workspace not initialized');
+        return;
+      }
 
+      const code = window.PythonGenerator.workspaceToCode(window.workspace);
+      console.log("Generated Code:", code);
       document.getElementById('pythonOutput').textContent = code || "No code generated.";
 
-      // Simulation
+      // Fake simulation based on code
       const simOutput = code.split('\n').map(line => {
         if (line.includes('move_forward')) {
           const steps = line.match(/\d+/);
