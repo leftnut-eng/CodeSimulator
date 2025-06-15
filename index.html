@@ -4,6 +4,10 @@
   <head>
     <meta charset="utf-8">
     <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+    <!-- Load a generator -->
+    <script src="https://unpkg.com/blockly/javascript_compressed.js"></script>
+    <!-- Load a message file -->
+    <script src="https://unpkg.com/blockly/msg/en.js"></script>
   </head>
   <body>
     <h2>Robot Code Simulator</h2>
@@ -12,6 +16,8 @@
       <category name="Movement">
         <block type="move_forward"></block>
         <block type="turn_left"></block>
+        <block type="turn_right"></block>
+        <block type="move_backwards"></block>
       </category>
     </xml>
 
@@ -32,11 +38,27 @@
         {
           "type": "turn_left",
           "message0": "turn left %1 degrees",
-          "args0": [{ "type": "field_angle", "name": "DEGREES", "angle": 90 }],
+          "args0": [{ "type": "field_number", "name": "DEGREES", "angle": 90 }],
           "previousStatement": null,
           "nextStatement": null,
           "colour": 210
-        }
+        },
+        {
+          "type": "turn_right",
+          "message0": "turn right %1 degrees",
+          "args0": [{ "type": "field_number", "name": "DEGREES", "angle": 90 }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210
+        },
+        {
+          "type": "move_backwards",
+          "message0": "move backwards %1 steps",
+          "args0": [{ "type": "field_number", "name": "STEPS", "value": 10 }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160
+        },
       ]);
     </script>
   </body>
