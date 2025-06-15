@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Blockly Robot Simulator</title>
+  <script src="/static/blockly/blockly_compressed.js"></script>
+  <script src="/static/blockly/blocks_compressed.js"></script>
+  <script src="/static/blockly/python_compressed.js"></script>
+  <script src="/static/blockly/msg/en.js"></script>
+</head>
+
+<body>
+  <h1>Blockly Robot Simulator</h1>
+  <button onclick="runCode()">Run Code</button>
+  <pre id="pythonCode"></pre>
+  <div id="blocklyDiv" style="height: 480px; width: 100%;"></div>
+
+  <xml id="toolbox" style="display: none">
+    <block type="controls_repeat_ext"></block>
+    <block type="math_number"></block>
+    <block type="robot_move_forward"></block>
+    <block type="robot_turn"></block>
+  </xml>
+
+  <script>
+    const workspace = Blockly.inject('blocklyDiv', {
+      toolbox: document.getElementById('toolbox')
+    });
+
+    Blockly.defineBlocksWithJsonArray([
+      {
+        "type": "robot_move_forward",
+        "message0": "move forward %1 units",
+        "args0": [{ "type": "input_value", "name": "DISTANCE" }],
+        "previousStatement": null,
+        "nextStatement": null,
+        "colour": 230
+      },
+      {
+        "type": "robot_turn",
+        "message0": "turn %1",
+        "args0": [{ "type": "field_dropdown", "name": "DIRECTION", "options": [["left", "left"], ["right", "right"]] }],
+        "previousStatement": null,
+        "nextStatement": null,
+        "colour": 160
+      }
+    ]);
+
+    Blockly.Python['robot_move_forward'] = function (block) {
+      var dist = Blockly.Python.valueToCode(block, 'DISTANCE', Blockly.Python.ORDER_ATOMIC);
+      return `robot.move_forward(${dist})\n`;
+    };
+
+    Blockly.Python['robot_turn'] = function (block) {
+      var dir = block.getFieldValue('DIRECTION');
+      return `robot.turn("${dir}")\n`;
+    };
+
+    function runCode() {
+      const code = Blockly.Python.workspaceToCode(workspace);
+      document.getElementById("pythonCode").textContent = code;
+      fetch('/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code })
+      });
+    }
+  </script>
+</body>
+
+</html>
