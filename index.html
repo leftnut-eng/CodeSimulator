@@ -1,64 +1,123 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
-    <!-- Load a generator -->
-    <script src="https://unpkg.com/blockly/javascript_compressed.js"></script>
-    <!-- Load a message file -->
-    <script src="https://unpkg.com/blockly/msg/en.js"></script>
-  </head>
-  <body>
-    <h2>Robot Code Simulator</h2>
-    <div id="blocklyDiv"></div>
-    <xml id="toolbox" style="display: none">
-      <category name="Movement">
-        <block type="move_forward"></block>
-        <block type="turn_left"></block>
-        <block type="turn_right"></block>
-        <block type="move_backwards"></block>
-      </category>
-    </xml>
+
+<head>
+  <meta charset="utf-8">
+  <title>Robot Code Simulator</title>
+  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <script src="https://unpkg.com/blockly/python.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+    }
+
+    #blocklyDiv {
+      height: 400px;
+      width: 100%;
+      border: 1px solid #ccc;
+      margin-bottom: 20px;
+    }
+
+    pre {
+      background-color: #f7f7f7;
+      padding: 10px;
+      border: 1px solid #ddd;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Robot Code Simulator</h1>
+  <button onclick="generateCode()">Run Code</button>
+
+  <h3>Generated Python Code</h3>
+  <pre id="pythonOutput">Waiting...</pre>
+
+  <h3>Simulated Robot Output</h3>
+  <pre id="simOutput">Waiting...</pre>
+
+  <div id="blocklyDiv"></div>
+
+  <xml id="toolbox" style="display: none">
+    <category name="Movement">
+      <block type="move_forward"></block>
+      <block type="turn_left"></block>
+      <block type="turn_right"></block>
+    </category>
+  </xml>
 
   <script>
     const workspace = Blockly.inject('blocklyDiv', {
       toolbox: document.getElementById('toolbox')
     });
 
-      Blockly.defineBlocksWithJsonArray([
-        {
-          "type": "move_forward",
-          "message0": "move forward %1 steps",
-          "args0": [{ "type": "field_number", "name": "STEPS", "value": 10 }],
-          "previousStatement": null,
-          "nextStatement": null,
-          "colour": 160
-        },
-        {
-          "type": "turn_left",
-          "message0": "turn left %1 degrees",
-          "args0": [{ "type": "field_number", "name": "DEGREES", "angle": 90 }],
-          "previousStatement": null,
-          "nextStatement": null,
-          "colour": 210
-        },
-        {
-          "type": "turn_right",
-          "message0": "turn right %1 degrees",
-          "args0": [{ "type": "field_number", "name": "DEGREES", "angle": 90 }],
-          "previousStatement": null,
-          "nextStatement": null,
-          "colour": 210
-        },
-        {
-          "type": "move_backwards",
-          "message0": "move backwards %1 steps",
-          "args0": [{ "type": "field_number", "name": "STEPS", "value": 10 }],
-          "previousStatement": null,
-          "nextStatement": null,
-          "colour": 160
-        },
-      ]);
-    </script>
-  </body>
+    Blockly.defineBlocksWithJsonArray([
+      {
+        "type": "move_forward",
+        "message0": "move forward %1 steps",
+        "args0": [{ "type": "field_number", "name": "STEPS", "value": 10 }],
+        "previousStatement": null,
+        "nextStatement": null,
+        "colour": 160
+      },
+      {
+        "type": "turn_left",
+        "message0": "turn left %1 degrees",
+        "args0": [{ "type": "field_number", "name": "DEGREES", "value": 90 }],
+        "previousStatement": null,
+        "nextStatement": null,
+        "colour": 210
+      },
+      {
+        "type": "turn_right",
+        "message0": "turn right %1 degrees",
+        "args0": [{ "type": "field_number", "name": "DEGREES", "value": 90 }],
+        "previousStatement": null,
+        "nextStatement": null,
+        "colour": 210
+      }
+    ]);
+
+    Blockly.Python['move_forward'] = function (block) {
+      const steps = block.getFieldValue('STEPS');
+      return `robot.move_forward(${steps})\n`;
+    };
+
+    Blockly.Python['turn_left'] = function (block) {
+      const degrees = block.getFieldValue('DEGREES');
+      return `robot.turn_left(${degrees})\n`;
+    };
+
+    Blockly.Python['turn_right'] = function (block) {
+      const degrees = block.getFieldValue('DEGREES');
+      return `robot.turn_right(${degrees})\n`;
+    };
+
+    function generateCode() {
+      const code = Blockly.Python.workspaceToCode(workspace);
+      console.log("Generated Code:", code);
+
+      document.getElementById('pythonOutput').textContent = code || "No code generated.";
+
+      // Simulation
+      const simOutput = code.split('\n').map(line => {
+        if (line.includes('move_forward')) {
+          const steps = line.match(/\d+/);
+          return `🟢 Move forward ${steps ? steps[0] : '?'} steps`;
+        } else if (line.includes('turn_left')) {
+          const degrees = line.match(/\d+/);
+          return `↩️ Turn left ${degrees ? degrees[0] : '?'} degrees`;
+        } else if (line.includes('turn_right')) {
+          const degrees = line.match(/\d+/);
+          return `↪️ Turn right ${degrees ? degrees[0] : '?'} degrees`;
+        }
+        return '';
+      }).filter(line => line.trim()).join('\n');
+
+      console.log("Simulated Output:", simOutput);
+      document.getElementById('simOutput').textContent = simOutput || "No simulation output.";
+    }
+  </script>
+</body>
+
 </html>
