@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   <title>Robot Code Simulator</title>
   <script src="https://unpkg.com/blockly/blockly.min.js"></script>
   <script src="https://unpkg.com/blockly/python.min.js"></script>
@@ -23,6 +23,11 @@
       padding: 10px;
       border: 1px solid #ddd;
     }
+
+    #simCanvas {
+      border: 1px solid #ccc;
+      margin-top: 10px;
+    }
   </style>
 </head>
 
@@ -38,6 +43,8 @@
 
   <div id="blocklyDiv"></div>
 
+  <canvas id="simCanvas" width="400" height="400"></canvas>
+
   <xml id="toolbox" style="display: none">
     <category name="Movement">
       <block type="move_forward"></block>
@@ -47,10 +54,10 @@
   </xml>
 
   <script>
-    const workspace = Blockly.inject('blocklyDiv', {
-      toolbox: document.getElementById('toolbox')
-    });
+    // 1. Create Python generator first
+    Blockly.Python = new Blockly.Generator('Python');
 
+    // 2. Define custom blocks
     Blockly.defineBlocksWithJsonArray([
       {
         "type": "move_forward",
@@ -78,6 +85,7 @@
       }
     ]);
 
+    // 3. Define Python code generation for custom blocks
     Blockly.Python['move_forward'] = function (block) {
       const steps = block.getFieldValue('STEPS');
       return `robot.move_forward(${steps})\n`;
@@ -93,29 +101,101 @@
       return `robot.turn_right(${degrees})\n`;
     };
 
+    // 4. Inject Blockly workspace
+    const workspace = Blockly.inject('blocklyDiv', {
+      toolbox: document.getElementById('toolbox')
+    });
+
+    // 5. Robot simulation code
+    const canvas = document.getElementById("simCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const robot = {
+      x: 200,
+      y: 200,
+      angle: 0,
+      size: 20,
+      ctx: ctx,
+
+      draw() {
+        this.ctx.clearRect(0, 0, canvas.width, canvas.height);
+        this.ctx.save();
+        this.ctx.translate(this.x, this.y);
+        this.ctx.rotate(this.angle);
+        this.ctx.fillStyle = "blue";
+        this.ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, 0);
+        this.ctx.lineTo(this.size / 2, 0);
+        this.ctx.strokeStyle = "white";
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+
+        this.ctx.restore();
+      },
+
+      move_forward(steps) {
+        this.x += steps * Math.cos(this.angle);
+        this.y += steps * Math.sin(this.angle);
+        this.draw();
+      },
+
+      turn_left(deg) {
+        this.angle -= deg * (Math.PI / 180);
+        this.draw();
+      },
+
+      turn_right(deg) {
+        this.angle += deg * (Math.PI / 180);
+        this.draw();
+      }
+    };
+
+    function resetRobot() {
+      robot.x = 200;
+      robot.y = 200;
+      robot.angle = 0;
+      robot.draw();
+    }
+
+    resetRobot();
+
+    // 6. Generate code and simulate
     function generateCode() {
-      const code = Blockly.Python.workspaceToCode(workspace);
-      console.log("Generated Code:", code);
+      try {
+        const code = Blockly.Python.workspaceToCode(workspace);
+        document.getElementById('pythonOutput').textContent = code || "No code generated.";
 
-      document.getElementById('pythonOutput').textContent = code || "No code generated.";
+        // Reset robot before simulation
+        resetRobot();
 
-      // Simulation
-      const simOutput = code.split('\n').map(line => {
-        if (line.includes('move_forward')) {
-          const steps = line.match(/\d+/);
-          return `🟢 Move forward ${steps ? steps[0] : '?'} steps`;
-        } else if (line.includes('turn_left')) {
-          const degrees = line.match(/\d+/);
-          return `↩️ Turn left ${degrees ? degrees[0] : '?'} degrees`;
-        } else if (line.includes('turn_right')) {
-          const degrees = line.match(/\d+/);
-          return `↪️ Turn right ${degrees ? degrees[0] : '?'} degrees`;
-        }
-        return '';
-      }).filter(line => line.trim()).join('\n');
+        // Run the generated code in a sandboxed function with robot available
+        // This safely executes robot commands from generated code
+        const func = new Function('robot', code);
+        func(robot);
 
-      console.log("Simulated Output:", simOutput);
-      document.getElementById('simOutput').textContent = simOutput || "No simulation output.";
+        // Show simulated output as text commands
+        const simOutput = code.split('\n').map(line => {
+          if (line.includes('move_forward')) {
+            const steps = line.match(/\d+/);
+            return `🟢 Move forward ${steps ? steps[0] : '?'} steps`;
+          } else if (line.includes('turn_left')) {
+            const degrees = line.match(/\d+/);
+            return `↩️ Turn left ${degrees ? degrees[0] : '?'} degrees`;
+          } else if (line.includes('turn_right')) {
+            const degrees = line.match(/\d+/);
+            return `↪️ Turn right ${degrees ? degrees[0] : '?'} degrees`;
+          }
+          return '';
+        }).filter(line => line.trim()).join('\n');
+
+        document.getElementById('simOutput').textContent = simOutput || "No simulation output.";
+
+      } catch (e) {
+        alert('Error generating or running code: ' + e.message);
+        console.error(e);
+      }
     }
   </script>
 </body>

@@ -1,2 +1,16 @@
-html, body { height: 100%; margin: 0; }
-#blocklyDiv { height: 480px; width: 600px; }
+body {
+      font-family: sans-serif;
+    }
+
+#blocklyDiv {
+      height: 400px;
+      width: 100%;
+      border: 1px solid #ccc;
+      margin-bottom: 20px;
+    }
+
+pre {
+      background-color: #f7f7f7;
+      padding: 10px;
+      border: 1px solid #ddd;
+    }
