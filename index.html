@@ -6,38 +6,19 @@
   <title>Robot Code Simulator</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/blockly.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/python.min.js"></script>
-  <style>
-    body {
-      font-family: sans-serif;
-    }
-
-    #blocklyDiv {
-      height: 400px;
-      width: 100%;
-      border: 1px solid #ccc;
-      margin-bottom: 20px;
-    }
-
-    pre {
-      background-color: #f7f7f7;
-      padding: 10px;
-      border: 1px solid #ddd;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
+ 
 </head>
 
 <body>
+
   <h1>Robot Code Simulator</h1>
-  <button onclick="generateCode()">Run Code</button>
 
-  <h3>Generated Python Code</h3>
-  <pre id="pythonOutput">Waiting...</pre>
-
-  <h3>Simulated Robot Output</h3>
-  <pre id="simOutput">Waiting...</pre>
-
-  <div id="blocklyDiv"></div>
-
+  <div class="sideBySide">
+    <div id="blocklyDiv"></div>
+    <canvas id="robotCanvas" width="800" height="400"></canvas>
+  </div>
+  
   <xml id="toolbox" style="display: none">
     <category name="Movement">
       <block type="move_forward"></block>
@@ -46,13 +27,24 @@
     </category>
   </xml>
 
+  <button onclick="generateCode()">Run Code</button>
+
+  <h3>Generated Python Code</h3>
+  <pre id="pythonOutput">Waiting...</pre>
+
+  <h3>Simulated Robot Output</h3>
+  <div class="simOutputContainer">
+    <pre id="simOutput"></pre>
+  </div>
+
+
   <script>
     window.addEventListener('load', function () {
       Blockly.defineBlocksWithJsonArray([
         {
           "type": "move_forward",
           "message0": "move forward %1 steps",
-          "args0": [{ "type": "field_number", "name": "STEPS", "value": 10 }],
+          "args0": [{ "type": "field_number", "name": "STEPS", "value": 100 }],
           "previousStatement": null,
           "nextStatement": null,
           "colour": 160,
@@ -130,26 +122,68 @@
 
       const code = window.PythonGenerator.workspaceToCode(window.workspace);
       console.log("Generated Code:", code);
-      document.getElementById('pythonOutput').textContent = code || "No code generated.";
+      document.getElementById('pythonOutput').textContent = code || "No code generated.";  
 
-      // Fake simulation based on code
-      const simOutput = code.split('\n').map(line => {
+      const lines = code.split('\n').filter(line => line.trim() !== '');
+      let index = 0;
+      robotState = { x: 200, y: 200, angle: 0 }; // reset robot
+      drawRobot();
+      document.getElementById('simOutput').textContent = 'Running...';
+
+      function executeNextLine() {
+        if (index >= lines.length) return;
+
+        const line = lines[index];
+        let log = '';
+
         if (line.includes('move_forward')) {
-          const steps = line.match(/\d+/);
-          return `🟢 Move forward ${steps ? steps[0] : '?'} steps`;
+          const steps = parseInt(line.match(/\d+/)[0]);
+          const radians = (robotState.angle * Math.PI) / 180;
+          robotState.x += Math.cos(radians) * steps;
+          robotState.y += Math.sin(radians) * steps;
+          log = `🟢 Move forward ${steps} steps`;
         } else if (line.includes('turn_left')) {
-          const degrees = line.match(/\d+/);
-          return `↩️ Turn left ${degrees ? degrees[0] : '?'} degrees`;
+          const degrees = parseInt(line.match(/\d+/)[0]);
+          robotState.angle -= degrees;
+          log = `↩️ Turn left ${degrees} degrees`;
         } else if (line.includes('turn_right')) {
-          const degrees = line.match(/\d+/);
-          return `↪️ Turn right ${degrees ? degrees[0] : '?'} degrees`;
+          const degrees = parseInt(line.match(/\d+/)[0]);
+          robotState.angle += degrees;
+          log = `↪️ Turn right ${degrees} degrees`;
         }
-        return '';
-      }).filter(line => line.trim()).join('\n');
 
-      console.log("Simulated Output:", simOutput);
-      document.getElementById('simOutput').textContent = simOutput || "No simulation output.";
+        drawRobot();
+        document.getElementById('simOutput').textContent += '\n' + log;
+
+        index++;
+        setTimeout(executeNextLine, 700); // delay between steps
+      }
+
+      executeNextLine();
     }
+
+    const canvas = document.getElementById('robotCanvas');
+    const ctx = canvas.getContext('2d');
+    const robotImg = new Image();
+    robotImg.src = 'robot.png';
+
+    let robotState = {
+      x: 200,
+      y: 200,
+      angle: 0
+    };
+
+    robotImg.onload = () => drawRobot();
+
+    function drawRobot() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.translate(robotState.x, robotState.y);
+      ctx.rotate((robotState.angle * Math.PI) / 180);
+      ctx.drawImage(robotImg, -25, -25, 50, 50); // center image
+      ctx.restore();
+    }
+
   </script>
 </body>
 
