@@ -18,8 +18,8 @@
   <div class="sideBySide">
     <div id="blocklyDiv"></div>
       <div id="canvasWrapper">
-        <canvas id="robotCanvas" width="800" height="400"></canvas>
-        <canvas id="trailCanvas"></canvas>
+        <canvas id="robotCanvas"  width="800" height="480"></canvas>
+        <canvas id="trailCanvas" width="800" height="480"></canvas>
       </div>
   </div>
 
@@ -112,12 +112,14 @@
       ctx.translate(robotState.x, robotState.y);
       ctx.rotate((robotState.angle * Math.PI) / 180);
       ctx.drawImage(robotImg, -25, -25, 50, 50); // centered
-       ctx.restore();
+      ctx.restore();
 
     }
 
     // Animation queue generator and logic
     function generateCode() {
+      trailCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+
       ctx.clearRect(0, 0, robotCanvas.width, robotCanvas.height);
       if (!window.workspace) return;
 
@@ -189,40 +191,43 @@
       runNext();
     }
 
-    function animateMove(distance, callback) {
-      const steps = 20;
-      let currentStep = 0;
-      const angleRad = (robotState.angle * Math.PI) / 180;
-      const dx = Math.cos(angleRad) * distance / steps;
-      const dy = Math.sin(angleRad) * distance / steps;
+ function animateMove(distance, callback) {
+    const steps = 20;
+    let currentStep = 0;
+    const angleRad = (robotState.angle * Math.PI) / 180;
+    const dx = Math.cos(angleRad) * distance / steps;
+    const dy = Math.sin(angleRad) * distance / steps;
 
-      function step() {
-        if (currentStep < steps) {
-          const prevX = robotState.x;
-          const prevY = robotState.y;
-          const newX = robotState.x + dx;
-          const newY = robotState.y + dy;
+    function step() {
+      if (currentStep < steps) {
+        const prevX = robotState.x;
+        const prevY = robotState.y;
 
-          // // Trail line
-          trailCtx.beginPath();
-          trailCtx.moveTo(prevX, prevY);
-          trailCtx.lineTo(newX, newY);
-          trailCtx.strokeStyle = 'red';
-          trailCtx.lineWidth = 20;
-          trailCtx.stroke();
+        const newX = robotState.x + dx;
+        const newY = robotState.y + dy;
 
-          robotState.x = newX;
-          robotState.y = newY;
-          drawRobot();
-          currentStep++;
-          requestAnimationFrame(step);
-        } else {
-          callback();
-        }
+        // Draw trail segment
+        trailCtx.beginPath();
+        trailCtx.moveTo(prevX, prevY);
+        trailCtx.lineTo(newX, newY);
+        trailCtx.strokeStyle = 'red';
+        trailCtx.lineWidth = 2;
+        trailCtx.stroke();
+
+        robotState.x = newX;
+        robotState.y = newY;
+
+        drawRobot();
+        currentStep++;
+        requestAnimationFrame(step);
+      } else {
+        callback();
       }
-
-      step();
     }
+
+    step();
+  }
+
 
     function animateTurn(degrees, callback) {
       const steps = 20;
@@ -245,6 +250,8 @@
 
     function resetRobot() {
       robotState = { x: 200, y: 200, angle: 0 };
+      trailCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+
       ctx.clearRect(0, 0, robotCanvas.width, robotCanvas.height);
       drawRobot();
       document.getElementById('simOutput').textContent = 'Robot reset.';
