@@ -2,48 +2,23 @@
 <html>
 
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8">
   <title>Robot Code Simulator</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/blockly.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/python.min.js"></script>
-  <style>
-    body {
-      font-family: sans-serif;
-    }
-
-    #blocklyDiv {
-      height: 400px;
-      width: 100%;
-      border: 1px solid #ccc;
-      margin-bottom: 20px;
-    }
-
-    pre {
-      background-color: #f7f7f7;
-      padding: 10px;
-      border: 1px solid #ddd;
-    }
-
-    #simCanvas {
-      border: 1px solid #ccc;
-      margin-top: 10px;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
+
   <h1>Robot Code Simulator</h1>
+
   <button onclick="generateCode()">Run Code</button>
+  <button onclick="resetRobot()">Reset</button>
 
-  <h3>Generated Python Code</h3>
-  <pre id="pythonOutput">Waiting...</pre>
-
-  <h3>Simulated Robot Output</h3>
-  <pre id="simOutput">Waiting...</pre>
-
-  <div id="blocklyDiv"></div>
-
-  <canvas id="simCanvas" width="400" height="400"></canvas>
+  <div class="sideBySide">
+    <div id="blocklyDiv"></div>
+        <canvas id="robotCanvas" width="800" height="400"></canvas>
+  </div>
 
   <xml id="toolbox" style="display: none">
     <category name="Movement">
@@ -51,141 +26,33 @@
       <block type="turn_left"></block>
       <block type="turn_right"></block>
     </category>
+    <category name="Loop">
+      <block type="repeat"></block>
+    </category>
   </xml>
 
+  
+
+  <h3>Generated Pseudo Code</h3>
+  <pre id="pythonOutput">Waiting...</pre>
+
+  <h3>Simulated Robot Output</h3>
+  <div class="simOutputContainer">
+    <pre id="simOutput"></pre>
+  </div>
+
+
   <script>
-<<<<<<< HEAD
-    // 1. Create Python generator first
-    Blockly.Python = new Blockly.Generator('Python');
-
-    // 2. Define custom blocks
-    Blockly.defineBlocksWithJsonArray([
-      {
-        "type": "move_forward",
-        "message0": "move forward %1 steps",
-        "args0": [{ "type": "field_number", "name": "STEPS", "value": 10 }],
-        "previousStatement": null,
-        "nextStatement": null,
-        "colour": 160
-      },
-      {
-        "type": "turn_left",
-        "message0": "turn left %1 degrees",
-        "args0": [{ "type": "field_number", "name": "DEGREES", "value": 90 }],
-        "previousStatement": null,
-        "nextStatement": null,
-        "colour": 210
-      },
-      {
-        "type": "turn_right",
-        "message0": "turn right %1 degrees",
-        "args0": [{ "type": "field_number", "name": "DEGREES", "value": 90 }],
-        "previousStatement": null,
-        "nextStatement": null,
-        "colour": 210
-      }
-    ]);
-
-    // 3. Define Python code generation for custom blocks
-    Blockly.Python['move_forward'] = function (block) {
-      const steps = block.getFieldValue('STEPS');
-      return `robot.move_forward(${steps})\n`;
-    };
-
-    Blockly.Python['turn_left'] = function (block) {
-      const degrees = block.getFieldValue('DEGREES');
-      return `robot.turn_left(${degrees})\n`;
-    };
-
-    Blockly.Python['turn_right'] = function (block) {
-      const degrees = block.getFieldValue('DEGREES');
-      return `robot.turn_right(${degrees})\n`;
-    };
-
-    // 4. Inject Blockly workspace
-    const workspace = Blockly.inject('blocklyDiv', {
-      toolbox: document.getElementById('toolbox')
-    });
-
-    // 5. Robot simulation code
-    const canvas = document.getElementById("simCanvas");
-    const ctx = canvas.getContext("2d");
-
-    const robot = {
-      x: 200,
-      y: 200,
-      angle: 0,
-      size: 20,
-      ctx: ctx,
-
-      draw() {
-        this.ctx.clearRect(0, 0, canvas.width, canvas.height);
-        this.ctx.save();
-        this.ctx.translate(this.x, this.y);
-        this.ctx.rotate(this.angle);
-        this.ctx.fillStyle = "blue";
-        this.ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
-
-        this.ctx.beginPath();
-        this.ctx.moveTo(0, 0);
-        this.ctx.lineTo(this.size / 2, 0);
-        this.ctx.strokeStyle = "white";
-        this.ctx.lineWidth = 2;
-        this.ctx.stroke();
-
-        this.ctx.restore();
-      },
-
-      move_forward(steps) {
-        this.x += steps * Math.cos(this.angle);
-        this.y += steps * Math.sin(this.angle);
-        this.draw();
-      },
-
-      turn_left(deg) {
-        this.angle -= deg * (Math.PI / 180);
-        this.draw();
-      },
-
-      turn_right(deg) {
-        this.angle += deg * (Math.PI / 180);
-        this.draw();
-      }
-    };
-
-    function resetRobot() {
-      robot.x = 200;
-      robot.y = 200;
-      robot.angle = 0;
-      robot.draw();
-    }
-
-    resetRobot();
-
-    // 6. Generate code and simulate
-    function generateCode() {
-      try {
-        const code = Blockly.Python.workspaceToCode(workspace);
-        document.getElementById('pythonOutput').textContent = code || "No code generated.";
-
-        // Reset robot before simulation
-        resetRobot();
-
-        // Run the generated code in a sandboxed function with robot available
-        // This safely executes robot commands from generated code
-        const func = new Function('robot', code);
-        func(robot);
-=======
+    // Blockly block definitions
     window.addEventListener('load', function () {
       Blockly.defineBlocksWithJsonArray([
         {
           "type": "move_forward",
           "message0": "move forward %1 steps",
-          "args0": [{ "type": "field_number", "name": "STEPS", "value": 10 }],
+          "args0": [{ "type": "field_number", "name": "STEPS", "value": 100 }],
           "previousStatement": null,
           "nextStatement": null,
-          "colour": 160,
-          "tooltip": "Move the robot forward by steps"
+          "colour": 160
         },
         {
           "type": "turn_left",
@@ -193,8 +60,7 @@
           "args0": [{ "type": "field_number", "name": "DEGREES", "value": 90 }],
           "previousStatement": null,
           "nextStatement": null,
-          "colour": 210,
-          "tooltip": "Turn the robot left"
+          "colour": 210
         },
         {
           "type": "turn_right",
@@ -202,102 +68,183 @@
           "args0": [{ "type": "field_number", "name": "DEGREES", "value": 90 }],
           "previousStatement": null,
           "nextStatement": null,
-          "colour": 210,
-          "tooltip": "Turn the robot right"
+          "colour": 210
+        },
+        {
+          "type": "repeat",
+          "message0": "repeat %1 times",
+          "args0": [{ "type": "field_number", "name": "TIMES", "value": 3, "min": 1 }],
+          "message1": "do %1",
+          "args1": [{ "type": "input_statement", "name": "DO" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 120
         }
       ]);
 
-      window.PythonGenerator = {
-        workspaceToCode: function (workspace) {
-          let code = '';
-          const topBlocks = workspace.getTopBlocks(true);
-
-          for (let block of topBlocks) {
-            code += this.blockToCode(block);
-          }
-          return code;
-        },
-
-        blockToCode: function (block) {
-          if (!block) return '';
-
-          let code = '';
-          const type = block.type;
-
-          if (type === 'move_forward') {
-            const steps = block.getFieldValue('STEPS');
-            code = `robot.move_forward(${steps})\n`;
-          } else if (type === 'turn_left') {
-            const degrees = block.getFieldValue('DEGREES');
-            code = `robot.turn_left(${degrees})\n`;
-          } else if (type === 'turn_right') {
-            const degrees = block.getFieldValue('DEGREES');
-            code = `robot.turn_right(${degrees})\n`;
-          }
-
-          // Handle next block
-          const nextBlock = block.getNextBlock();
-          if (nextBlock) {
-            code += this.blockToCode(nextBlock);
-          }
-
-          return code;
-        }
-      };
-
-      // Initialize workspace AFTER defining blocks
       window.workspace = Blockly.inject('blocklyDiv', {
         toolbox: document.getElementById('toolbox')
       });
     });
 
+    // Canvas setup
+    // const trailCanvas = document.getElementById('trailCanvas');
+    // const trailCtx = trailCanvas.getContext('2d');
+    const robotCanvas = document.getElementById('robotCanvas');
+    const ctx = robotCanvas.getContext('2d');
+    const robotImg = new Image();
+    robotImg.src = 'robot.png'; // Replace with your image path or use a fallback
+
+    let robotState = {
+      x: 200,
+      y: 200,
+      angle: 0
+    };
+
+    robotImg.onload = () => drawRobot();
+
+    function drawRobot() {
+      // ctx.clearRect(0, 0, robotCanvas.width, robotCanvas.height);
+      ctx.save();
+      ctx.translate(robotState.x, robotState.y);
+      ctx.rotate((robotState.angle * Math.PI) / 180);
+      ctx.drawImage(robotImg, -25, -25, 50, 50); // centered
+      ctx.restore();
+
+    }
+
+    // Animation queue generator and logic
     function generateCode() {
-      if (!window.workspace) {
-        console.error('Workspace not initialized');
-        return;
-      }
+      ctx.clearRect(0, 0, robotCanvas.width, robotCanvas.height);
+      if (!window.workspace) return;
 
-      const code = window.PythonGenerator.workspaceToCode(window.workspace);
-      console.log("Generated Code:", code);
-      document.getElementById('pythonOutput').textContent = code || "No code generated.";
+      document.getElementById('pythonOutput').textContent = '';
+      document.getElementById('simOutput').textContent = '';
+      robotState = { x: 200, y: 200, angle: 0 };
+      // trailCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+      drawRobot();
 
-      // Fake simulation based on code
-      const simOutput = code.split('\n').map(line => {
-        if (line.includes('move_forward')) {
-          const steps = line.match(/\d+/);
-          return `🟢 Move forward ${steps ? steps[0] : '?'} steps`;
-        } else if (line.includes('turn_left')) {
-          const degrees = line.match(/\d+/);
-          return `↩️ Turn left ${degrees ? degrees[0] : '?'} degrees`;
-        } else if (line.includes('turn_right')) {
-          const degrees = line.match(/\d+/);
-          return `↪️ Turn right ${degrees ? degrees[0] : '?'} degrees`;
-        }
-        return '';
-      }).filter(line => line.trim()).join('\n');
->>>>>>> a79ea79b13a1a2c17ed4ebe2c45575f2a1265030
+      const blocks = window.workspace.getTopBlocks(true);
+      const actionQueue = [];
 
-        // Show simulated output as text commands
-        const simOutput = code.split('\n').map(line => {
-          if (line.includes('move_forward')) {
-            const steps = line.match(/\d+/);
-            return `🟢 Move forward ${steps ? steps[0] : '?'} steps`;
-          } else if (line.includes('turn_left')) {
-            const degrees = line.match(/\d+/);
-            return `↩️ Turn left ${degrees ? degrees[0] : '?'} degrees`;
-          } else if (line.includes('turn_right')) {
-            const degrees = line.match(/\d+/);
-            return `↪️ Turn right ${degrees ? degrees[0] : '?'} degrees`;
+      function walkBlock(block) {
+        if (!block) return;
+        const type = block.type;
+
+        if (type === 'move_forward') {
+          const steps = block.getFieldValue('STEPS');
+          actionQueue.push({ action: 'move_forward', value: parseInt(steps) });
+        } else if (type === 'turn_left') {
+          const degrees = block.getFieldValue('DEGREES');
+          actionQueue.push({ action: 'turn', value: -parseInt(degrees) });
+        } else if (type === 'turn_right') {
+          const degrees = block.getFieldValue('DEGREES');
+          actionQueue.push({ action: 'turn', value: parseInt(degrees) });
+        } else if (type === 'repeat') {
+          const times = parseInt(block.getFieldValue('TIMES'));
+          const inner = block.getInputTargetBlock('DO');
+          for (let i = 0; i < times; i++) {
+            walkBlock(inner);
           }
-          return '';
-        }).filter(line => line.trim()).join('\n');
+        }
 
-        document.getElementById('simOutput').textContent = simOutput || "No simulation output.";
-
-      } catch (e) {
-        alert('Error generating or running code: ' + e.message);
-        console.error(e);
+        walkBlock(block.getNextBlock());
       }
+
+      for (const block of blocks) {
+        walkBlock(block);
+      }
+
+      document.getElementById('pythonOutput').textContent = actionQueue.map(a => {
+        if (a.action === 'move_forward') return `robot.move_forward(${a.value})`;
+        if (a.action === 'turn') return `robot.turn_${a.value < 0 ? 'left' : 'right'}(${Math.abs(a.value)})`;
+      }).join('\n');
+
+      let index = 0;
+      function runNext() {
+        if (index >= actionQueue.length) {
+          document.getElementById('simOutput').textContent += '\n✅ Finished!';
+          return;
+        }
+
+        const item = actionQueue[index];
+        if (item.action === 'move_forward') {
+          animateMove(item.value, () => {
+            document.getElementById('simOutput').textContent += `\n🟢 Move forward ${item.value} steps`;
+            index++;
+            runNext();
+          });
+        } else if (item.action === 'turn') {
+          animateTurn(item.value, () => {
+            document.getElementById('simOutput').textContent += `\n🔄 Turn ${item.value < 0 ? 'left' : 'right'} ${Math.abs(item.value)}°`;
+            index++;
+            runNext();
+          });
+        }
+      }
+
+      runNext();
+    }
+
+    function animateMove(distance, callback) {
+      const steps = 20;
+      let currentStep = 0;
+      const angleRad = (robotState.angle * Math.PI) / 180;
+      const dx = Math.cos(angleRad) * distance / steps;
+      const dy = Math.sin(angleRad) * distance / steps;
+
+      function step() {
+        if (currentStep < steps) {
+          const prevX = robotState.x;
+          const prevY = robotState.y;
+          const newX = robotState.x + dx;
+          const newY = robotState.y + dy;
+
+          // // Trail line
+          ctx.beginPath();
+          ctx.moveTo(prevX, prevY);
+          ctx.lineTo(newX, newY);
+          ctx.strokeStyle = 'red';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          robotState.x = newX;
+          robotState.y = newY;
+          drawRobot();
+          currentStep++;
+          requestAnimationFrame(step);
+        } else {
+          callback();
+        }
+      }
+
+      step();
+    }
+
+    function animateTurn(degrees, callback) {
+      const steps = 20;
+      let currentStep = 0;
+      const delta = degrees / steps;
+
+      function step() {
+        if (currentStep < steps) {
+          robotState.angle += delta;
+          drawRobot();
+          currentStep++;
+          requestAnimationFrame(step);
+        } else {
+          callback();
+        }
+      }
+
+      step();
+    }
+
+    function resetRobot() {
+      robotState = { x: 200, y: 200, angle: 0 };
+      ctx.clearRect(0, 0, robotCanvas.width, robotCanvas.height);
+      drawRobot();
+      document.getElementById('simOutput').textContent = 'Robot reset.';
     }
   </script>
 </body>
