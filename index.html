@@ -17,7 +17,10 @@
 
   <div class="sideBySide">
     <div id="blocklyDiv"></div>
+      <div id="canvasWrapper">
         <canvas id="robotCanvas" width="800" height="400"></canvas>
+        <canvas id="trailCanvas"></canvas>
+      </div>
   </div>
 
   <xml id="toolbox" style="display: none">
@@ -88,8 +91,8 @@
     });
 
     // Canvas setup
-    // const trailCanvas = document.getElementById('trailCanvas');
-    // const trailCtx = trailCanvas.getContext('2d');
+    const trailCanvas = document.getElementById('trailCanvas');
+    const trailCtx = trailCanvas.getContext('2d');
     const robotCanvas = document.getElementById('robotCanvas');
     const ctx = robotCanvas.getContext('2d');
     const robotImg = new Image();
@@ -109,7 +112,7 @@
       ctx.translate(robotState.x, robotState.y);
       ctx.rotate((robotState.angle * Math.PI) / 180);
       ctx.drawImage(robotImg, -25, -25, 50, 50); // centered
-      ctx.restore();
+       ctx.restore();
 
     }
 
@@ -201,12 +204,12 @@
           const newY = robotState.y + dy;
 
           // // Trail line
-          ctx.beginPath();
-          ctx.moveTo(prevX, prevY);
-          ctx.lineTo(newX, newY);
-          ctx.strokeStyle = 'red';
-          ctx.lineWidth = 2;
-          ctx.stroke();
+          trailCtx.beginPath();
+          trailCtx.moveTo(prevX, prevY);
+          trailCtx.lineTo(newX, newY);
+          trailCtx.strokeStyle = 'red';
+          trailCtx.lineWidth = 20;
+          trailCtx.stroke();
 
           robotState.x = newX;
           robotState.y = newY;
