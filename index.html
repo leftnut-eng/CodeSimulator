@@ -176,18 +176,44 @@
             walkBlock(inner);
           }
         } else if (type === 'controls_if') {
-          const condition_statement = block.getFieldValue('CONDITION');
+          const condition = block.getFieldValue('CONDITION');
           const inner = block.getInputTargetBlock('DO');
-          actionQueue.push({action: 'if', condition: condition_statement})
-          // Simulate condition check
-          const conditionIsTrue = checkCondition(condition_statement);
 
-          if (conditionIsTrue) {
-            console.log('hello');
-            walkBlock(inner);
+          // Build a subqueue for the body of the if
+          const subQueue = [];
+          function walkInner(innerBlock) {
+            if (!innerBlock) return;
+            const type = innerBlock.type;
+
+            if (type === 'move_forward') {
+              const steps = innerBlock.getFieldValue('STEPS');
+              subQueue.push({ action: 'move_forward', value: parseInt(steps) });
+            } else if (type === 'turn_left') {
+              const degrees = innerBlock.getFieldValue('DEGREES');
+              subQueue.push({ action: 'turn', value: -parseInt(degrees) });
+            } else if (type === 'turn_right') {
+              const degrees = innerBlock.getFieldValue('DEGREES');
+              subQueue.push({ action: 'turn', value: parseInt(degrees) });
+            } else if (type === 'repeat') {
+              const times = parseInt(innerBlock.getFieldValue('TIMES'));
+              const nested = innerBlock.getInputTargetBlock('DO');
+              for (let i = 0; i < times; i++) {
+                walkInner(nested);
+              }
+            } else if (type === 'controls_if') {
+              // Recursively nest conditionals
+              const nestedCond = innerBlock.getFieldValue('CONDITION');
+              const nestedInner = innerBlock.getInputTargetBlock('DO');
+              const nestedSubQueue = [];
+              walkInner(nestedInner);
+              subQueue.push({ action: 'if', condition: nestedCond, body: [...nestedSubQueue] });
+            }
+
+            walkInner(innerBlock.getNextBlock());
           }
+          walkInner(inner); // Build the subqueue
+          actionQueue.push({ action: 'if', condition: condition, body: subQueue });
         }
-
 
         walkBlock(block.getNextBlock());
       }
@@ -199,8 +225,13 @@
       document.getElementById('pythonOutput').textContent = actionQueue.map(a => {
         if (a.action === 'move_forward') return `robot.move_forward(${a.value})`;
         if (a.action === 'turn') return `robot.turn_${a.value < 0 ? 'left' : 'right'}(${Math.abs(a.value)})`;
-        if (a.action === 'if') return `if (${a.condition})`;
+        if (a.action === 'if') return `if ${a.condition}:\n  ${a.body.map(b =>
+          b.action === 'move_forward' ? `robot.move_forward(${b.value})` :
+            b.action === 'turn' ? `robot.turn_${b.value < 0 ? 'left' : 'right'}(${Math.abs(b.value)})` :
+              ''
+        ).join('\n  ')}`;
       }).join('\n');
+
 
       let index = 0;
       function runNext() {
@@ -222,6 +253,14 @@
             index++;
             runNext();
           });
+        } else if (item.action === 'if') {
+          const cond = checkCondition(item.condition);
+          if (cond) {
+            // Insert body actions into the queue right after this index
+            actionQueue.splice(index + 1, 0, ...item.body);
+          }
+          index++;
+          runNext();
         }
       }
 
