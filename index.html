@@ -267,39 +267,38 @@
       const actionQueue = [];
 
       function walkBlock(block) {
-        if (!block) return;
         walkInner(block, actionQueue);
-        walkBlock(block.getNextBlock());
       }
+
       function walkInner(innerBlock, queue) {
-        if (!innerBlock) return;
-        const type = innerBlock.type;
+        while (innerBlock) {
+          const type = innerBlock.type;
 
-        if (type === 'move_forward') {
-          const steps = innerBlock.getFieldValue('STEPS');
-          queue.push({ action: 'move_forward', value: parseInt(steps) });
-        } else if (type === 'turn_left') {
-          const degrees = innerBlock.getFieldValue('DEGREES');
-          queue.push({ action: 'turn', value: -parseInt(degrees) });
-        } else if (type === 'turn_right') {
-          const degrees = innerBlock.getFieldValue('DEGREES');
-          queue.push({ action: 'turn', value: parseInt(degrees) });
-        } else if (type === 'repeat') {
-          const times = parseInt(innerBlock.getFieldValue('TIMES'));
-          const nested = innerBlock.getInputTargetBlock('DO');
-          for (let i = 0; i < times; i++) {
-            walkInner(nested);
+          if (type === 'move_forward') {
+            const steps = parseInt(innerBlock.getFieldValue('STEPS'));
+            queue.push({ action: 'move_forward', value: steps});
+          } else if (type === 'turn_left') {
+            const degrees = parseInt(innerBlock.getFieldValue('DEGREES'));
+            queue.push({ action: 'turn', value: -degrees});
+          } else if (type === 'turn_right') {
+            const degrees = parseInt(innerBlock.getFieldValue('DEGREES'));
+            queue.push({ action: 'turn', value: degrees});
+          } else if (type === 'repeat') {
+            const times = parseInt(innerBlock.getFieldValue('TIMES'));
+            const nested = innerBlock.getInputTargetBlock('DO');
+            for (let i = 0; i < times; i++) {
+              walkInner(nested, queue);
+            }
+          } else if (type === 'controls_if') {
+            // Recursively nest conditionals
+            const nestedCond = innerBlock.getFieldValue('CONDITION');
+            const nestedInner = innerBlock.getInputTargetBlock('DO');
+            const nestedQueue = [];
+            walkInner(nestedInner, nestedQueue);
+            queue.push({ action: 'if', condition: nestedCond, body: nestedQueue});
           }
-        } else if (type === 'controls_if') {
-          // Recursively nest conditionals
-          const nestedCond = innerBlock.getFieldValue('CONDITION');
-          const nestedInner = innerBlock.getInputTargetBlock('DO');
-          const nestedQueue = [];
-          walkInner(nestedInner, nestedQueue);
-          queue.push({ action: 'if', condition: nestedCond, body: nestedQueue});
+          innerBlock = innerBlock.getNextBlock();
         }
-
-        walkInner(innerBlock.getNextBlock(), queue);
       }
 
       for (const block of blocks) {
@@ -415,6 +414,14 @@
       ctx.clearRect(0, 0, robotCanvas.width, robotCanvas.height);
       drawRobot();
       document.getElementById('simOutput').textContent = 'Robot reset.';
+    }
+
+    function checkStatement() {
+      if ('LEFT' < 'RIGHT') {
+        return true;
+      } else if ('LEFT' > 'RIGHT') {
+        return true;
+      }
     }
 
     function checkCondition(condition) {
